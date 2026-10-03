@@ -12,44 +12,21 @@ The **Translator Tool** (`translate`) is an open, generic translation and locali
 
 ---
 
-## Golden Directive: Always Use English — Leave Translation to the Translator Tool
+## Translation Guidelines
 
-> [!IMPORTANT]
-> **CRITICAL AGENT OPERATING DIRECTIVE:**
-> 1. **ALWAYS REASON, DRAFT, AND PROPOSE OPTIONS IN ENGLISH**:
->    - You must ALWAYS write your internal `<think>` reasoning, conversation responses to your operator, and proposed `<options>` in standard English.
->    - NEVER attempt to compose non-English text, foreign languages, or regional colloquial dialects (such as Gujlish, Hinglish, Spanish, French, Gujarati, etc.) yourself in thought, prose, or options!
-> 2. **NO MANUAL FOREIGN LANGUAGE OR DIALECT GENERATION**:
->    - Generating non-English dialects directly in your thought process or options produces broken, unnatural, or hallucinated sentences (e.g. broken Gujlish).
-> 3. **DELEGATE ALL TRANSLATION TO THE `translate` TOOL**:
->    - Formulate your draft messages, suggested replies, and options in clean English:
->      - CORRECT: `<option>Translate and send: "Sure, come quickly! 😄"</option>`
->      - STRICTLY FORBIDDEN: `<option>Translate and send: "Ji, jaldi aa ja! 😄"</option>` (NEVER draft foreign words inside options!)
->    - When a message needs to be sent or shown in a specific target language or dialect, invoke the `translate` tool (`target_lang: "..."`).
->    - Leave all translation, transliteration, and localization entirely to the translator tool.
-> 4. **MANDATORY OUTBOUND SENDING PROTOCOL (`send_message`, `send_email`)**:
->    - When sending an outbound message to a contact in their language or dialect:
->      1. Call `translate(text: "<english_draft>", target_lang: "<contact_language>")`.
->      2. In the subsequent `send_message` (or `send_email`) tool call, the `message` argument MUST BE the exact `translated` string returned by the `translate` tool!
->      3. **STRICTLY FORBIDDEN**: NEVER pass your English draft into `send_message`. The external contact expects the message in their language; sending English defeats translation!
->      4. In your summary response to your operator in Syndae chat, report the translation clearly:
->         - English draft: "..."
->         - Translated message sent: "<exact translated string from tool>"
+The **`translate`** tool provides high-fidelity, culturally nuanced translation, transliteration, and sociolinguistic localization across languages and colloquial dialects.
 
----
-
-## When to Call `translate`
-
-1. **Cross-Language Inbound Messages**:
-   - When receiving messages or documents from users or contacts in another language, call `translate` with `target_lang: "english"` (or your preferred working language).
-2. **Context-Appropriate Outbound Responses**:
-   - When responding to contacts on messaging platforms (WhatsApp, Email, etc.), formulate your reply in clean English, then translate to the contact's preferred language and dialect (e.g., `target_lang: "spanish"`, `target_lang: "gujlish"`, `target_lang: "french"`).
-3. **Tone Matching**:
-   - Use `tone: "casual"` for messaging platforms and chats.
-   - Use `tone: "formal"` or `tone: "business"` for client emails, official correspondence, and professional documentation.
-   - Use `tone: "slang"` for modern youth expressions.
-4. **Mandatory Execution on Colloquial Dialects & Slang**:
-   - Always call `translate` whenever encountering non-English phrases, regional slang, or romanized dialects (e.g. Gujlish, Hinglish). Never guess or hallucinate translations in your thought trace; rely completely on the translator tool.
+1. **Autonomous Translation Capability**:
+   - Advanced multi-lingual models may translate directly when capable.
+   - When precision, transliteration (e.g. phonetic Gujlish / Hinglish), dialect nuances, or specific honorifics are required, invoke `translate` to ensure accurate and authentic communication.
+2. **Dialect and Transliteration Support**:
+   - Regional conversational dialects (such as Gujlish, Hinglish, Romaji) often benefit from the tool's specialized dictionary and pronunciation rules.
+3. **Outbound Messaging**:
+   - When communicating with external contacts on messaging channels (e.g. WhatsApp, Email), verify or translate the message into the recipient's preferred language or dialect.
+4. **Tone and Formality Matching**:
+   - Use `tone: "casual"` for chat platforms.
+   - Use `tone: "formal"` or `tone: "business"` for professional correspondence.
+   - Provide `context` (e.g., `formality: "respectful"`, `relationship: "elder"`) whenever respect tiers or gender agreements matter.
 
 ---
 

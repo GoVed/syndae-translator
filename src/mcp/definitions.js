@@ -4,13 +4,13 @@
 export const TOOL_DEFINITIONS = [
   {
     name: 'translate',
-    description: 'Translate text between any languages worldwide (English, Spanish, French, German, Japanese, Chinese, Hindi, Gujarati, Arabic, Russian, Portuguese, etc.) and colloquial chat dialects (Gujlish, Hinglish). MANDATORY DIRECTIVE: On incoming non-English messages, invoke this tool with target_lang: "english" immediately to translate. The agent MUST ALWAYS reason, communicate, and formulate options in 100% English. Never manually compose non-English or dialect text in thoughts, prose, or options; formulate options in English and invoke this translate tool to perform the translation.',
+    description: 'Translate text between any languages worldwide (English, Spanish, French, German, Japanese, Chinese, Hindi, Gujarati, Arabic, Russian, Portuguese, etc.) and colloquial chat dialects (such as Gujlish and Hinglish). Supports nuance, formality/honorifics, tone, and cultural adaptation.',
     inputSchema: {
       type: 'object',
       properties: {
         text: {
           type: 'string',
-          description: 'The English text string to translate into the target language, or foreign text to translate into English.'
+          description: 'The text string to translate into the target language.'
         },
         target_lang: {
           type: 'string',
