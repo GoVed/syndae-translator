@@ -27,6 +27,19 @@ export function detectLanguage(text) {
   if (/[\u0370-\u03FF]/.test(text)) return 'greek';
   if (/[\u0590-\u05FF]/.test(text)) return 'hebrew';
   if (/[\u0E00-\u0E7F]/.test(text)) return 'thai';
+
+  // Romanized regional dialects (e.g. Gujlish, Hinglish)
+  const lower = text.toLowerCase();
+  const gujlishKeywords = /\b(chhe|che|6u|6e|pa6i|pachi|nathi|thay|thai|aav|aavo|revanu|tamare|tamaro|tamara|amare|amaro|amara|karvu|jovo|joti|joto|bau|bov|saro|sari|saru|eva|jeva|karto|hase|su|shu|kem|aaje|kaale|pela|have|vichar|joie|mokli|moklo)\b/;
+  const hinglishKeywords = /\b(nahi|nhi|hoga|hogi|karna|karne|karo|raha|rahi|rahe|kya|kyu|kyun|accha|achha|theek|thik|samajh|batao|bata|aaya|gaya)\b/;
+
+  if (gujlishKeywords.test(lower) || /\b(pade|chhe)\s+6\b/.test(lower) || /\bpa6i\b/.test(lower)) {
+    return 'gujlish';
+  }
+  if (hinglishKeywords.test(lower)) {
+    return 'hinglish';
+  }
+
   if (/[a-zA-Z]/.test(text)) return 'latin';
 
   return 'auto';
@@ -89,8 +102,9 @@ function buildPrompt(text, targetLang, sourceLang, tone = 'natural', context = n
   };
   const toneDesc = toneMap[(tone || 'natural').toLowerCase()] || 'natural conversational style';
 
-  const srcLabel = (sourceLang && sourceLang !== 'auto' && sourceLang.toLowerCase() !== 'latin' && sourceLang.toLowerCase() !== targetLang.toLowerCase())
-    ? ` from ${sourceLang}`
+  const normalizedSource = (sourceLang || '').toLowerCase();
+  const srcLabel = (sourceLang && sourceLang !== 'auto' && normalizedSource !== 'latin' && normalizedSource !== targetLang.toLowerCase())
+    ? ` from ${normalizedSource === 'gujlish' ? 'Gujlish (colloquial Gujarati written in Latin script)' : normalizedSource === 'hinglish' ? 'Hinglish (colloquial Hindi written in Latin script)' : sourceLang}`
     : '';
 
   let contextDirectives = '';
@@ -124,7 +138,20 @@ function buildPrompt(text, targetLang, sourceLang, tone = 'natural', context = n
     }
   }
 
-  const system = `You are a universal multilingual translator and localization engine. Translate the provided text${srcLabel} into ${targetLang}. For romanized regional dialects (e.g. Gujlish, Hinglish), translate the colloquial meaning accurately into ${targetLang}.
+  let dialectNotes = '';
+  if (normalizedSource === 'gujlish' || targetLang.toLowerCase() === 'gujlish') {
+    dialectNotes = `\nColloquial Gujlish notes:
+- Digits as sounds: In digital messaging, numbers like "6" represent the "chh" sound (e.g. pa6i = pachi/after, 6u = chhu/am, pade 6 = have to, 6 = is).
+- Pronouns: "ene/aene" = he/she/them (dative "ene taklif chhe" = "he/she has difficulty"), "mane" = to me, "tane" = to you, "hu" = I, "ame" = we.
+- Common verbs: aavis = will come, aavyo = came, aavse = will come, malva = to meet, jou = see/watch, joto = checking/watching, mokli de = sends, skip karvu pade = have to skip, thai jay = accumulates/happens.
+- Common terms: saro/sari = good, taklif = difficulty/trouble, revanu = staying/living, bau = too much/enough, kal = tomorrow/yesterday, hase = must be.
+Examples:
+- "Hm revanu taklif chhe ene" -> "Hm, he has difficulty staying there"
+- "idea saro chhe" -> "The idea is good"
+- "hu mostly to jou 6u" -> "I mostly check/watch"`;
+  }
+
+  const system = `You are a universal multilingual translator and localization engine. Translate the provided text${srcLabel} into ${targetLang}. For romanized regional dialects (e.g. Gujlish, Hinglish), translate the colloquial meaning accurately into ${targetLang}.${dialectNotes}
 Style: Use a ${toneDesc}.${contextDirectives}
 Formatting: Output ONLY the direct translation. Never include explanations, grammar breakdowns, notes, pronunciation guides, or quotation marks.`;
 
@@ -188,6 +215,7 @@ async function callOpenAiCompatible(system, prompt, stop) {
           { role: 'user', content: prompt }
         ],
         temperature: 0.1,
+        chat_template_kwargs: { enable_thinking: false },
         stop
       }),
       signal: controller.signal
@@ -247,8 +275,22 @@ export async function translateText({ text, target_lang, source_lang = 'auto', t
   // 2. Pre-configured dictionary glossary
   const loaded = loadGlossary();
   const dictTerms = loaded?.terms || {};
-  const matched = dictTerms[cleanInput] || dictTerms[normalizedInput]
+  let matched = dictTerms[cleanInput] || dictTerms[normalizedInput]
     || Object.entries(dictTerms).find(([k]) => normalize(k) === normalizedInput)?.[1];
+
+  if (!matched) {
+    const interjectionMatch = cleanInput.match(/^(h+m+|ha|na|arre|arrey|oho|oh|accha|acha)\s*[,.:;]?\s+/i);
+    if (interjectionMatch) {
+      const prefix = interjectionMatch[1].charAt(0).toUpperCase() + interjectionMatch[1].slice(1).toLowerCase() + ', ';
+      const stripped = cleanInput.slice(interjectionMatch[0].length).trim();
+      const normStripped = normalize(stripped);
+      const subMatch = dictTerms[stripped] || dictTerms[normStripped]
+        || Object.entries(dictTerms).find(([k]) => normalize(k) === normStripped)?.[1];
+      if (subMatch) {
+        matched = `${prefix}${subMatch}`;
+      }
+    }
+  }
 
   if (matched) {
     return {
@@ -270,7 +312,12 @@ export async function translateText({ text, target_lang, source_lang = 'auto', t
     let rawOutput = '';
 
     if (config.backend === 'openai_compatible') {
-      rawOutput = await callOpenAiCompatible(system, prompt, stop);
+      try {
+        rawOutput = await callOpenAiCompatible(system, prompt, stop);
+      } catch (openAiErr) {
+        logger.warn({ err: openAiErr.message }, 'OpenAI compatible translation failed, falling back to Ollama');
+        rawOutput = await callOllama(system, prompt, stop);
+      }
     } else {
       rawOutput = await callOllama(system, prompt, stop);
     }

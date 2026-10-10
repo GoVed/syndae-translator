@@ -149,7 +149,7 @@ await testAsync('Engine: translates English to conversational Gujlish (Latin scr
   });
   assert.strictEqual(res.provider, 'model');
   assert.ok(res.translated.length > 0);
-  assert.strictEqual(detectLanguage(res.translated), 'latin');
+  assert.ok(detectLanguage(res.translated) === 'latin' || detectLanguage(res.translated) === 'gujlish');
 });
 
 await testAsync('Engine: context-aware translation with respect and gender parameters', async () => {
