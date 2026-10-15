@@ -10,7 +10,7 @@ services:
     environment:
       - TRANSLATION_BACKEND=${TRANSLATION_BACKEND:-openai_compatible}
       - TRANSLATION_API_URL=${TRANSLATION_API_URL:-http://host.docker.internal:8080/v1}
-      - TRANSLATION_MODEL=${TRANSLATION_MODEL:-syndae-k2-horizon-7b}
+      - TRANSLATION_MODEL=${TRANSLATION_MODEL:-/models/Huihui-Qwen3.8-27B-abliterated-UD-IQ3_S.gguf}
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - HTTP_PORT=8772
       - HTTP_HOST=0.0.0.0

@@ -24,7 +24,7 @@ export const config = {
   apiKey: process.env.TRANSLATION_API_KEY || '',
 
   // Translation Model ID (e.g. syndae-k2-horizon-7b, qwen2.5:3b, llama3.2, etc.)
-  translationModel: process.env.TRANSLATION_MODEL || 'syndae-k2-horizon-7b',
+  translationModel: process.env.TRANSLATION_MODEL || '/models/Huihui-Qwen3.8-27B-abliterated-UD-IQ3_S.gguf',
 
   // Default target language when unspecified
   defaultTargetLang: process.env.DEFAULT_TARGET_LANG || 'english',
